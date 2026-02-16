@@ -1,0 +1,32 @@
+# ===========================
+# Media & Asset Files
+# ===========================
+
+# Profile images (personal photos)
+profile.jpeg
+profile2.jpeg
+
+# Cover/poster card images
+kapak_*.png
+
+# Photo gallery images
+fto_*.jpeg
+
+# Video files
+*.mp4
+
+# ===========================
+# IDE & Editor Files
+# ===========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ===========================
+# OS-Generated Files
+# ===========================
+Thumbs.db
+.DS_Store
+desktop.ini

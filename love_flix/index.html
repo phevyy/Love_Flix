@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İyi Ki Doğdun Sevgilim! | Aşkflix</title>
+    <style>
+        /* ========================================================
+           CSS CUSTOM PROPERTIES (Design Tokens)
+           Netflix-inspired color palette used throughout the page.
+           ======================================================== */
+        :root {
+            --netflix-red: #E50914;
+            --netflix-black: #141414;
+        }
+
+        /* ========================================================
+           GLOBAL RESET
+           Removes the default blue tap-highlight on mobile devices
+           and disables the long-press callout menu on iOS.
+           ======================================================== */
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            outline: none;
+        }
+
+        /* Base body and html styles: full viewport, dark background */
+        body, html {
+            margin: 0; padding: 0;
+            width: 100%; height: 100%;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: var(--netflix-black);
+            color: white;
+            overflow-x: hidden;
+        }
+
+        /* ========================================================
+           1. PROFILE SELECTION SCREEN
+           Full-screen overlay that mimics Netflix's "Who's watching?"
+           profile picker. Displayed on load, hidden after selection.
+           ======================================================== */
+        #profile-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--netflix-black);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s;
+        }
+
+        /* Top-left branding bar on the profile screen */
+        .profile-nav {
+            position: absolute;
+            top: 0; left: 0; width: 100%;
+            padding: 20px 4%;
+            box-sizing: border-box;
+        }
+        .profile-nav .logo {
+            color: var(--netflix-red);
+            font-size: 1.8rem; font-weight: bold;
+        }
+
+        /* "Who's watching?" heading */
+        #profile-screen h1 {
+            font-size: 2.5rem;
+            color: white;
+            margin-bottom: 30px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        /* Flex container that holds profile avatar boxes */
+        .profiles-wrapper {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* Individual profile avatar card */
+        .profile-box {
+            cursor: pointer;
+            text-align: center;
+            width: 150px;
+        }
+
+        /* Desktop: enlarge profile boxes and heading */
+        @media (min-width: 768px) {
+            .profile-box { width: 220px; }
+            #profile-screen h1 { font-size: 3.5rem; }
+            .profile-nav .logo { font-size: 2.2rem; }
+        }
+
+        /* Profile avatar image with hover border animation */
+        .profile-box img {
+            width: 100%;
+            aspect-ratio: 1/1;
+            border-radius: 4px;
+            object-fit: cover;
+            border: 3px solid transparent;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .profile-box:hover img {
+            border-color: white;
+            transform: scale(1.1);
+        }
+
+        /* Profile name label below avatar */
+        .profile-box span {
+            display: block;
+            margin-top: 15px;
+            font-size: 1.2rem;
+            color: #808080;
+            transition: color 0.3s;
+        }
+
+        .profile-box:hover span { color: white; }
+
+        /* ========================================================
+           2. NAVIGATION BAR (Top Header)
+           Fixed navbar with gradient fade, logo on left,
+           "Switch Profile" button on right.
+           ======================================================== */
+        header {
+            position: fixed;
+            top: 0; width: 100%;
+            padding: 15px 4%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
+            z-index: 100;
+            box-sizing: border-box;
+        }
+
+        .logo {
+            color: var(--netflix-red);
+            font-size: 1.5rem; font-weight: bold;
+        }
+
+        /* "Switch Profile" button in the navbar */
+        .manage-profiles {
+            color: #808080;
+            border: 1px solid #808080;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        /* ========================================================
+           3. HERO SECTION
+           Large cinematic banner with looping background video,
+           dark overlay gradients, title text, and action buttons.
+           ======================================================== */
+        .hero {
+            position: relative;
+            height: 70vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            padding: 0 4%;
+            background: black;
+        }
+
+        /* Desktop: taller hero section */
+        @media (min-width: 768px) { .hero { height: 85vh; } }
+
+        /* Background video: centered, slightly blurred, semi-transparent */
+        #hero-video-bg {
+            position: absolute; top: 50%; left: 50%;
+            min-width: 100%; min-height: 100%;
+            z-index: 0; transform: translate(-50%, -50%);
+            opacity: 0.6; filter: blur(2px); object-fit: cover;
+        }
+
+        /* Multi-layer gradient overlays for cinematic darkening */
+        .hero-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to right, rgba(20,20,20,0.95) 15%, rgba(20,20,20,0.3) 50%, rgba(20,20,20,0.95) 100%),
+                        linear-gradient(to bottom, transparent 60%, rgba(20,20,20,1) 100%);
+            z-index: 1;
+        }
+
+        /* Hero text content positioned above the overlay */
+        .hero-content {
+            position: relative; z-index: 2;
+            max-width: 90%;
+        }
+
+        .hero-content h1 {
+            font-size: 2rem; margin-bottom: 10px; line-height: 1.1;
+        }
+
+        /* Desktop: larger hero title */
+        @media (min-width: 768px) { .hero-content h1 { font-size: 3.5rem; } }
+
+        .hero-content p { font-size: 0.9rem; margin-bottom: 20px; }
+
+        /* Shared button styles for Play and Info buttons */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 10px 20px; font-size: 0.9rem; font-weight: bold;
+            border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;
+            text-decoration: none;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+        @media (min-width: 768px) { .btn { padding: 12px 28px; font-size: 1.1rem; } }
+
+        .play-btn { background-color: white; color: black; }
+        .info-btn { background-color: rgba(109, 109, 110, 0.7); color: white; }
+
+        /* ========================================================
+           4. VERTICAL CARD GRID (Poster / Episode Grid)
+           Netflix-style poster cards displayed in a responsive
+           flex-wrap grid. 2 columns on mobile, 5 on desktop.
+           ======================================================== */
+        .content-row { padding: 20px 4%; }
+        .content-row h2 { font-size: 1.5rem; margin-bottom: 10px; }
+
+        /* Flex container with wrapping — cards flow to next line when full */
+        .card-container { 
+            display: flex; 
+            gap: 15px; 
+            padding: 15px 0; 
+            flex-wrap: wrap;
+            justify-content: flex-start;
+        }
+        
+        /* Individual poster card: 2:3 aspect ratio, hover scale effect */
+        .card {
+            flex: 0 0 calc(50% - 15px);  /* 2 cards per row on mobile */
+            aspect-ratio: 2 / 3;          /* Consistent portrait ratio */
+            min-width: 140px; 
+            border-radius: 4px; 
+            position: relative; 
+            overflow: hidden; 
+            background-color: #222;
+            transition: transform 0.3s ease;
+        }
+
+        /* Desktop: 5 cards per row */
+        @media (min-width: 768px) {
+            .card { 
+                flex: 0 0 calc(20% - 15px); 
+                min-width: 180px; 
+            }
+        }
+
+        /* Card image: fills the card, cropped to fit via object-fit */
+        .card img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover;
+        }
+
+        /* Hover effect: slight zoom, raised z-index to overlap neighbors */
+        .card:hover { transform: scale(1.05); z-index: 5; }
+
+        /* Bottom gradient label overlay on each card */
+        .card-desc {
+            position: absolute; bottom: 0; width: 100%;
+            background: linear-gradient(to top, rgba(0,0,0,1) 0%, transparent 100%);
+            padding: 25px 10px 10px; box-sizing: border-box; text-align: center; 
+            font-size: 0.8rem; font-weight: bold;
+        }
+
+        /* ========================================================
+           5. MODALS (Video Player & Info / Countdown Timer)
+           Full-screen overlay modals for the birthday video
+           and the relationship timer / love message.
+           ======================================================== */
+        #video-modal, #info-modal {
+            display: none; position: fixed; top: 0; left: 0; 
+            width: 100vw; height: 100vh; background: rgba(0,0,0,0.98);
+            z-index: 10000; justify-content: center; align-items: center;
+        }
+        
+        /* Video element inside the video modal */
+        #birthday-video { 
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            outline: none;
+        }
+
+        /* Info modal inner container with dark card styling */
+        .info-container {
+            background: #181818; padding: 20px; border-radius: 10px; width: 85%;
+            text-align: center; position: relative; z-index: 10003;
+        }
+        @media (min-width: 768px) { .info-container { padding: 40px; max-width: 550px; } }
+
+        /* Info modal title and subtitle */
+        .netflix-title { color: var(--netflix-red); font-size: 1.5rem; margin-bottom: 5px; }
+        .sub-header { color: #fbaed2; font-weight: bold; margin-bottom: 15px; font-size: 0.9rem; }
+        
+        /* Countdown timer grid: 2 columns on mobile, 4 on desktop */
+        .timer-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 20px 0;
+        }
+        @media (min-width: 768px) { .timer-grid { grid-template-columns: repeat(4, 1fr); } }
+
+        /* Individual timer box (Days / Hours / Minutes / Seconds) */
+        .timer-box { background: #2f2f2f; padding: 10px 5px; border-radius: 4px; }
+        .timer-box span { display: block; font-size: 1.4rem; font-weight: bold; }
+        .timer-label { font-size: 0.6rem; color: #a3a3a3; text-transform: uppercase; }
+
+        /* Close (×) buttons for both modals */
+        .close-modal, .close-info {
+            position: absolute; top: 20px; right: 20px; font-size: 35px; color: white; cursor: pointer; z-index: 10004;
+            text-shadow: 0 0 10px black;
+        }
+
+        /* ========================================================
+           6. FALLING HEARTS ANIMATION
+           Decorative heart emojis that fall from the top of
+           the info modal, creating a romantic rain effect.
+           ======================================================== */
+        .falling-heart {
+            position: absolute; top: -50px; font-size: 20px; color: #ff1744;
+            animation: fall linear infinite; opacity: 0.8; z-index: 10002; pointer-events: none;
+        }
+        @keyframes fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
+            100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================================
+         PROFILE SELECTION SCREEN
+         Mimics Netflix "Who's watching?" — clicking a profile
+         fades out this overlay and reveals the main content.
+         ============================================================ -->
+    <div id="profile-screen">
+        <div class="profile-nav">
+            <div class="logo">AŞKFLİX</div>
+        </div>
+        <h1>Kim izliyor?</h1>
+        <div class="profiles-wrapper">
+            <div class="profile-box" onclick="startSurprise()">
+                <img src="profile.jpeg" alt="Eylül">
+                <span>Mimarım Eylülüm</span>
+            </div>
+            <div class="profile-box" onclick="startSurprise()">
+                <img src="profile2.jpeg" alt="Amirim">
+                <span>Amirim</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         VIDEO MODAL
+         Full-screen overlay that plays the birthday video.
+         Clicking outside the video or the × button closes it.
+         ============================================================ -->
+    <div id="video-modal" onclick="closeVideoOnClickOutside(event)">
+        <span class="close-modal" onclick="closeVideo()">&times;</span>
+        <video id="birthday-video" playsinline webkit-playsinline>
+            <source src="filmim.mp4" type="video/mp4">
+        </video>
+    </div>
+
+    <!-- ============================================================
+         INFO MODAL
+         Shows the relationship countdown timer, a love quote,
+         and a falling-hearts animation in the background.
+         ============================================================ -->
+    <div id="info-modal" onclick="closeInfoOnClickOutside(event)">
+        <div class="info-container">
+            <span class="close-info" onclick="closeInfo()">&times;</span>
+            <div class="netflix-title">Bizim Hikayemiz</div>
+            <div class="sub-header">%100 Aşk ile Eşleşti</div>
+            <div id="timer" class="timer-grid"></div>
+            <p style="font-size: 0.8rem; color: #d2d2d2; font-style: italic;">"Seninle geçen her an, en güzel sahne gibi."</p>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         MAIN NAVIGATION BAR
+         Fixed at top with gradient fade. Logo links back to the
+         profile screen; "Profil Değiştir" also returns to it.
+         ============================================================ -->
+    <header>
+        <div class="logo" onclick="backToProfiles()">AŞKFLİX</div>
+        <div class="manage-profiles" onclick="backToProfiles()">Profil Değiştir</div>
+    </header>
+
+    <!-- ============================================================
+         MAIN CONTENT AREA
+         ============================================================ -->
+    <main>
+        <!-- HERO BANNER — Looping background video with overlay and CTA buttons -->
+        <section class="hero">
+            <video autoplay muted loop playsinline id="hero-video-bg">
+                <source src="filmim.mp4" type="video/mp4">
+            </video>
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <h1>S2: BÖLÜM 1<br>İyi Ki Doğdun!</h1>
+                <p>Yeni sezon 31 Ocak !</p>
+                <div>
+                    <button class="btn play-btn" onclick="openVideo()">♥ Oynat</button>
+                    <button class="btn info-btn" onclick="openInfo()">♥ Bilgi</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- POSTER / EPISODE GRID — Shows cover images as Netflix-style cards -->
+        <section class="content-row">
+            <h2>1. Sezon</h2>
+            <div class="card-container">
+                <div class="card"><img src="kapak_1.png"><div class="card-desc"></div></div>
+                <div class="card"><img src="kapak_2.png"><div class="card-desc"></div></div>
+                <div class="card"><img src="kapak_3.png"><div class="card-desc"></div></div>
+                <div class="card"><img src="kapak_4.png"><div class="card-desc"></div></div>
+                <div class="card"><img src="kapak_5.png"><div class="card-desc"></div></div>
+                <div class="card"><img src="kapak_6.png"><div class="card-desc"></div></div>
+                <div class="card"><img src="kapak_7.png"><div class="card-desc"></div></div>
+                <div class="card"><img src="kapak_8.png"><div class="card-desc"></div></div>
+                <div class="card"><img src="kapak_9.png"><div class="card-desc"></div></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ================================================================
+         JAVASCRIPT — Application Logic
+         Handles profile selection, modal open/close, video playback,
+         relationship countdown timer, and falling hearts animation.
+         ================================================================ -->
+    <script>
+        // ---- DOM Element References ----
+        const videoModal = document.getElementById('video-modal');
+        const videoPlayer = document.getElementById('birthday-video');
+        const infoModal = document.getElementById('info-modal');
+        const profileScreen = document.getElementById('profile-screen');
+
+        // Relationship start date — used to calculate the countdown timer
+        const startDate = new Date("2025-11-29T00:00:00");
+
+        // Interval ID for the falling hearts animation (so we can clear it)
+        let heartInterval = null;
+
+        // ---- Profile Screen Functions ----
+
+        /**
+         * Hides the profile selection screen with a fade-out animation.
+         * Called when any profile avatar is clicked.
+         */
+        function startSurprise() {
+            profileScreen.style.opacity = '0';
+            setTimeout(() => { profileScreen.style.visibility = 'hidden'; }, 500);
+        }
+
+        /**
+         * Shows the profile selection screen again (fade-in).
+         * Called when the logo or "Switch Profile" button is clicked.
+         */
+        function backToProfiles() {
+            profileScreen.style.visibility = 'visible';
+            profileScreen.style.opacity = '1';
+        }
+
+        // ---- Video Modal Functions ----
+
+        /**
+         * Opens the full-screen video modal and starts playback.
+         */
+        function openVideo() {
+            videoModal.style.display = 'flex';
+            videoPlayer.play();
+        }
+
+        /**
+         * Closes the video modal, pauses the video, and resets to the beginning.
+         */
+        function closeVideo() {
+            videoModal.style.display = 'none';
+            videoPlayer.pause();
+            videoPlayer.currentTime = 0;
+        }
+
+        // Close any open modal when the Escape key is pressed
+        window.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
+                closeVideo();
+                closeInfo();
+            }
+        });
+
+        // ---- Info Modal & Falling Hearts Functions ----
+
+        /**
+         * Creates a single heart emoji element that falls from a random
+         * horizontal position with a randomized duration (3–7 seconds).
+         * The heart auto-removes itself after its animation completes.
+         */
+        function createFallingHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('falling-heart');
+            heart.textContent = '❤️';
+            heart.style.left = Math.random() * 100 + '%';
+            const duration = 3 + Math.random() * 4;
+            heart.style.animationDuration = duration + 's';
+            infoModal.appendChild(heart);
+            setTimeout(() => { heart.remove(); }, duration * 1000);
+        }
+
+        /**
+         * Opens the info modal, starts the falling hearts animation
+         * (one heart every 400ms), and updates the countdown timer.
+         */
+        function openInfo() {
+            infoModal.style.display = 'flex';
+            heartInterval = setInterval(createFallingHeart, 400);
+            updateTimer(); 
+        }
+
+        /**
+         * Closes the info modal, stops spawning hearts,
+         * and removes any remaining heart elements from the DOM.
+         */
+        function closeInfo() { 
+            infoModal.style.display = 'none'; 
+            clearInterval(heartInterval);
+            document.querySelectorAll('.falling-heart').forEach(h => h.remove());
+        }
+
+        // ---- Relationship Countdown Timer ----
+
+        /**
+         * Calculates the time elapsed since `startDate` and renders
+         * days, hours, minutes, and seconds into the timer grid.
+         * Called once on modal open and then every second via setInterval.
+         */
+        function updateTimer() {
+            const now = new Date();
+            const diff = now - startDate;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            const timerDiv = document.getElementById('timer');
+            if (timerDiv) {
+                timerDiv.innerHTML = `
+                    <div class="timer-box"><span>${days}</span><div class="timer-label">Gün</div></div>
+                    <div class="timer-box"><span>${hours}</span><div class="timer-label">Saat</div></div>
+                    <div class="timer-box"><span>${minutes}</span><div class="timer-label">Dak</div></div>
+                    <div class="timer-box"><span>${seconds}</span><div class="timer-label">Sn</div></div>
+                `;
+            }
+        }
+
+        // Update the countdown timer every second
+        setInterval(updateTimer, 1000);
+
+        // ---- Click-Outside-to-Close Handlers ----
+        // These close the respective modals when the dark overlay area is clicked
+        // (but not when clicking inside the modal content itself).
+
+        function closeVideoOnClickOutside(event) { if (event.target === videoModal) closeVideo(); }
+        function closeInfoOnClickOutside(event) { if (event.target === infoModal) closeInfo(); }
+    </script>
+</body>
+</html>
